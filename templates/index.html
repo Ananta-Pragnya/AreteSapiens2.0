@@ -1,0 +1,1232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AreteSapiens — Personal Life OS</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #101522;
+      --surface:  #1A2233;
+      --surface2: #222D43;
+      --border:   #35435D;
+      --gold:     #7DE2DD;
+      --gold-dim: #2A8D8A;
+      --gold-bg:  rgba(125,226,221,0.10);
+      --gold-bg2: rgba(125,226,221,0.18);
+      --text:     #F7F5FF;
+      --text-dim: #B8C4D8;
+      --text-muted: #8392AA;
+      --red:      #FF8AA2;
+      --red-bg:   rgba(255,138,162,0.13);
+      --green:    #8FE0AF;
+      --green-bg: rgba(143,224,175,0.12);
+      --amber:    #D6A2FF;
+      --amber-bg: rgba(214,162,255,0.13);
+      --radius:   16px;
+      --radius-sm: 10px;
+    }
+
+    html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: radial-gradient(circle at 88% 0%, rgba(125,226,221,0.09), transparent 28%), radial-gradient(circle at 4% 90%, rgba(214,162,255,0.08), transparent 26%), var(--bg); color: var(--text); font-size: 15px; line-height: 1.6; }
+
+    .topnav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: rgba(16,21,34,0.88); backdrop-filter: blur(18px);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 36px; padding: 0 32px; height: 64px;
+    }
+    .brand { font-size: 18px; font-weight: 750; color: var(--text); letter-spacing: -0.5px; flex-shrink: 0; }
+    .brand span { color: var(--text-dim); font-weight: 400; }
+    .nav-tabs { display: flex; gap: 4px; }
+    .nav-tab {
+      padding: 8px 12px; border-radius: 8px; font-size: 13px; font-weight: 650;
+      cursor: pointer; border: none; background: transparent; color: var(--text-dim);
+      transition: all 0.15s; white-space: nowrap;
+    }
+    .nav-tab:hover { color: var(--text); background: var(--surface); }
+    .nav-tab.active { background: var(--gold-bg2); color: var(--gold); }
+    .nav-badge { display: inline-block; margin-left: 6px; padding: 1px 6px; border-radius: 10px; font-size: 10px; font-weight: 600; background: var(--gold); color: #000; vertical-align: middle; }
+
+    .main { margin-top: 64px; min-height: calc(100vh - 64px); }
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* ── Vaakil layout with history sidebar ── */
+    #vaakil-page { width: 100%; height: 100%; }
+    #vaakil-outer { display: flex; width: 100%; height: calc(100vh - 64px); overflow: hidden; }
+    #vaakil-sidebar { width: 264px; flex-shrink: 0; background: rgba(26,34,51,0.72); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; transition: width 0.2s; }
+    #vaakil-sidebar.collapsed { width: 0; }
+    #vaakil-sidebar.empty { width: 0; border-right-width: 0; }
+    .sidebar-header { padding: 14px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+    .sidebar-header h4 { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-dim); }
+    .sidebar-list { flex: 1; overflow-y: auto; padding: 8px; }
+    .sidebar-item { padding: 10px 12px; border-radius: 8px; cursor: pointer; border: 1px solid transparent; margin-bottom: 4px; transition: all 0.12s; }
+    .sidebar-item:hover { background: var(--surface); border-color: var(--border); }
+    .sidebar-item.active { background: var(--gold-bg); border-color: var(--gold-dim); }
+    .sidebar-item-flag { font-size: 14px; }
+    .sidebar-item-title { font-size: 12px; font-weight: 600; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sidebar-item-sub { font-size: 10px; color: var(--text-muted); margin-top: 1px; }
+    .sidebar-new-btn { margin: 8px; padding: 8px; border-radius: 8px; border: 1px dashed var(--border); background: transparent; color: var(--text-muted); font-size: 12px; cursor: pointer; text-align: center; transition: all 0.12s; width: calc(100% - 16px); }
+    .sidebar-new-btn:hover { border-color: var(--gold); color: var(--gold); }
+    #vaakil-main { flex: 1; min-width: 0; overflow-y: auto; }
+    #vaakil-page-inner { width: min(100%, 1220px); margin: 0 auto; padding: 62px 56px 96px; }
+    #vaakil-upload-section { display: grid; grid-template-columns: minmax(320px, 0.86fr) minmax(390px, 1.14fr); gap: 18px 32px; align-items: start; }
+    .vaakil-hero { grid-column: 1 / -1; display: block; text-align: left; margin: 0 0 22px; padding: 0 0 28px; border-bottom: 1px solid var(--border); }
+    .vaakil-hero h1 { font-size: clamp(34px, 4vw, 54px); line-height: 1.08; font-weight: 760; max-width: 700px; margin-bottom: 14px; letter-spacing: -0.04em; }
+    .vaakil-hero h1 span { color: var(--gold); }
+    .vaakil-hero p { color: var(--text-dim); font-size: 16px; max-width: 660px; }
+    .free-badge { grid-column: 1; display: inline-block; width: fit-content; padding: 5px 10px; background: var(--green-bg); color: var(--green); border: 1px solid rgba(143,224,175,0.28); border-radius: 7px; font-size: 11px; font-weight: 750; margin-bottom: 16px; letter-spacing: 0.06em; text-transform: uppercase; }
+
+    .upload-card { grid-column: 1; grid-row: 2 / span 5; min-height: 430px; display: flex; flex-direction: column; justify-content: center; background: linear-gradient(155deg, rgba(34,45,67,0.95) 0%, rgba(22,29,45,0.96) 100%); border: 1px dashed #4d6680; border-radius: 22px; padding: 48px 36px; text-align: left; cursor: pointer; transition: border-color 0.15s, transform 0.15s, background 0.15s; }
+    .upload-card:hover, .upload-card.drag-over { border-color: var(--gold); transform: translateY(-2px); }
+    .upload-icon { font-size: 40px; margin-bottom: 18px; }
+    .upload-card h3 { font-size: 21px; font-weight: 720; margin-bottom: 8px; letter-spacing: -0.02em; }
+    .upload-card p { color: var(--text-dim); font-size: 14px; margin-bottom: 20px; }
+    .upload-or { grid-column: 2; color: var(--text-muted); font-size: 12px; margin: 0; position: relative; text-align: center; }
+    .upload-or::before, .upload-or::after { content: ''; position: absolute; top: 50%; width: 40%; height: 1px; background: var(--border); }
+    .upload-or::before { left: 0; } .upload-or::after { right: 0; }
+
+    .flag-row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-bottom: 20px; }
+    #vaakil-upload-section > div[style^="margin:16px"] { grid-column: 2; margin: 2px 0 0 !important; }
+    #vaakil-upload-section .flag-row { grid-column: 2; justify-content: flex-start; margin: 0; }
+    #vaakil-upload-section > div[style^="margin-top:20px"] { grid-column: 2; margin-top: 4px !important; }
+    .flag-btn { padding: 6px 12px; border-radius: 20px; border: 1px solid var(--border); background: transparent; color: var(--text-dim); font-size: 12px; cursor: pointer; transition: all 0.15s; }
+    .flag-btn:hover { border-color: var(--gold); color: var(--gold); }
+    .flag-btn.selected { border-color: var(--gold); background: var(--gold-bg); color: var(--gold); }
+
+    textarea.doc-paste { grid-column: 2; width: 100%; min-height: 185px; background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; color: var(--text); font-size: 14px; padding: 16px; resize: vertical; font-family: inherit; transition: border-color 0.15s; }
+    textarea.doc-paste:focus { outline: none; border-color: var(--gold); }
+
+    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 20px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; border: none; cursor: pointer; transition: all 0.15s; }
+    .btn-gold { background: var(--gold); color: #000; }
+    .btn-gold:hover { background: #D97706; }
+    .btn-gold:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-dim); }
+    .btn-outline:hover { border-color: var(--gold); color: var(--gold); }
+    .btn-danger { background: var(--red-bg); color: var(--red); border: 1px solid transparent; }
+    .btn-danger:hover { border-color: var(--red); }
+    .btn-sm { padding: 6px 12px; font-size: 12px; }
+
+    .results-view { display: none; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+    .results-view .doc-banner, .results-view > .section-card:nth-of-type(2), .results-view > div[style^="display:flex"] { grid-column: 1 / -1; margin-bottom: 0; }
+    .doc-banner { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 20px; display: flex; align-items: center; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; }
+    .doc-banner-icon { font-size: 28px; flex-shrink: 0; }
+    .doc-banner-meta h3 { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+    .doc-banner-meta p { font-size: 12px; color: var(--text-dim); }
+    .doc-country { margin-left: auto; text-align: right; }
+    .doc-country .country-name { font-size: 13px; font-weight: 600; color: var(--gold); }
+    .doc-country .law { font-size: 11px; color: var(--text-muted); max-width: 200px; }
+
+    .section-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px; margin-bottom: 0; }
+    .section-card h2 { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-dim); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+    .section-card h2 .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); flex-shrink: 0; }
+    .summary-text { color: var(--text); font-size: 14px; line-height: 1.6; }
+    .meaning-text { color: var(--text-dim); font-size: 13px; line-height: 1.6; margin-top: 8px; }
+
+    .issue-item { border-radius: var(--radius-sm); padding: 14px 16px; margin-bottom: 10px; border-left: 3px solid; }
+    .issue-item.high { background: var(--red-bg); border-color: var(--red); }
+    .issue-item.medium { background: var(--amber-bg); border-color: var(--amber); }
+    .issue-item.low { background: rgba(148,163,184,0.08); border-color: var(--text-muted); }
+    .issue-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+    .issue-badge { padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 700; text-transform: uppercase; }
+    .issue-badge.high { background: rgba(239,68,68,0.2); color: var(--red); }
+    .issue-badge.medium { background: rgba(245,158,11,0.2); color: var(--amber); }
+    .issue-badge.low { background: rgba(148,163,184,0.15); color: var(--text-dim); }
+    .issue-title { font-size: 13px; font-weight: 600; }
+    .issue-excerpt { font-family: monospace; font-size: 11px; background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 4px; color: var(--amber); margin-bottom: 6px; word-break: break-all; }
+    .issue-explanation { font-size: 12px; color: var(--text-dim); line-height: 1.5; }
+    .no-issues { text-align: center; padding: 20px; }
+
+    .rights-list { list-style: none; }
+    .rights-list li { padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; display: flex; gap: 10px; }
+    .rights-list li:last-child { border: none; }
+    .rights-list li::before { content: '✓'; color: var(--green); font-weight: 700; flex-shrink: 0; }
+
+    .action-item { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+    .action-item:last-child { border: none; }
+    .action-day { font-size: 11px; font-weight: 700; color: var(--gold); background: var(--gold-bg); padding: 4px 8px; border-radius: 6px; flex-shrink: 0; white-space: nowrap; align-self: flex-start; }
+    .action-text { font-size: 13px; color: var(--text); }
+
+    .lawyer-card { display: flex; gap: 12px; }
+    .lawyer-icon { font-size: 28px; flex-shrink: 0; }
+    .lawyer-verdict { font-size: 12px; font-weight: 700; text-transform: uppercase; margin-bottom: 4px; }
+    .lawyer-verdict.self { color: var(--green); }
+    .lawyer-verdict.consult { color: var(--amber); }
+    .lawyer-text { font-size: 13px; color: var(--text-dim); line-height: 1.5; }
+
+    .template-box { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 16px; font-size: 13px; font-family: 'Georgia', serif; color: var(--text); white-space: pre-wrap; line-height: 1.7; max-height: 300px; overflow-y: auto; }
+    .forum-link { margin-top: 12px; font-size: 12px; }
+    .forum-link a { color: var(--gold); text-decoration: none; }
+    .forum-link a:hover { text-decoration: underline; }
+
+    .chat-view { display: none; }
+    .chat-doc-banner { background: var(--gold-bg); border: 1px solid var(--gold-dim); border-radius: var(--radius); padding: 12px 16px; margin-bottom: 16px; font-size: 13px; color: var(--gold); }
+    .chat-messages { min-height: 200px; max-height: 400px; overflow-y: auto; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 12px; }
+    .msg { max-width: 85%; }
+    .msg.user { align-self: flex-end; }
+    .msg.assistant { align-self: flex-start; }
+    .msg-bubble { padding: 10px 14px; border-radius: 12px; font-size: 13px; line-height: 1.5; }
+    .msg.user .msg-bubble { background: var(--gold-bg2); color: var(--text); border-radius: 12px 12px 2px 12px; }
+    .msg.assistant .msg-bubble { background: var(--surface2); color: var(--text); border-radius: 12px 12px 12px 2px; }
+    .chat-input-row { display: flex; gap: 8px; }
+    .chat-input-row input { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); padding: 10px 14px; font-size: 13px; font-family: inherit; }
+    .chat-input-row input:focus { outline: none; border-color: var(--gold); }
+    .chat-nav { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+    .chip-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+    .chip { padding: 5px 12px; border-radius: 16px; border: 1px solid var(--border); background: var(--surface); color: var(--text-dim); font-size: 11px; cursor: pointer; transition: all 0.12s; white-space: nowrap; }
+    .chip:hover { border-color: var(--gold); color: var(--gold); background: var(--gold-bg); }
+    .image-preview { grid-column: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 14px; display: flex; align-items: center; gap: 10px; margin-top: 0; font-size: 13px; color: var(--text-dim); }
+    .image-preview span { color: var(--gold); font-weight: 600; }
+
+    /* ── Finance ── */
+    #finance-page, #bench-page { width: min(100%, 1220px); margin: 0 auto; padding: 48px 56px 80px; }
+    .paywall { max-width: 520px; margin: 60px auto; text-align: center; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 48px 40px; }
+    .paywall-icon { font-size: 48px; margin-bottom: 16px; }
+    .paywall h2 { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+    .paywall p { color: var(--text-dim); font-size: 14px; margin-bottom: 24px; line-height: 1.6; }
+    .paywall-features { list-style: none; margin: 0 0 32px; text-align: left; }
+    .paywall-features li { padding: 8px 0; font-size: 13px; display: flex; gap: 10px; border-bottom: 1px solid var(--border); }
+    .paywall-features li:last-child { border: none; }
+    .paywall-features li::before { content: '◆'; color: var(--gold); font-size: 10px; flex-shrink: 0; margin-top: 3px; }
+    .trial-btn { background: var(--gold); color: #000; border: none; padding: 14px 32px; border-radius: var(--radius-sm); font-size: 15px; font-weight: 700; cursor: pointer; width: 100%; transition: background 0.15s; }
+    .trial-btn:hover { background: #D97706; }
+    .trial-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .trial-note { font-size: 11px; color: var(--text-muted); margin-top: 8px; }
+
+    .finance-dashboard { display: none; }
+    .finance-header { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; }
+    .score-ring { position: relative; width: 80px; height: 80px; flex-shrink: 0; }
+    .score-ring svg { transform: rotate(-90deg); }
+    .score-ring .score-num { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .score-ring .score-num span { font-size: 22px; font-weight: 700; line-height: 1; }
+    .score-ring .score-num small { font-size: 9px; color: var(--text-muted); text-transform: uppercase; }
+    .score-info h2 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+    .score-info p { font-size: 13px; color: var(--text-dim); }
+    .score-level { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 700; text-transform: uppercase; margin-left: 8px; }
+    .score-level.GOOD { background: var(--green-bg); color: var(--green); }
+    .score-level.AT-RISK { background: var(--red-bg); color: var(--red); }
+    .score-level.NEEDS-ATTENTION { background: var(--amber-bg); color: var(--amber); }
+
+    .subtab-bar { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 24px; overflow-x: auto; }
+    .subtab { padding: 8px 16px; font-size: 13px; font-weight: 500; color: var(--text-dim); cursor: pointer; border: none; background: transparent; border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; transition: all 0.15s; }
+    .subtab:hover { color: var(--text); }
+    .subtab.active { color: var(--gold); border-bottom-color: var(--gold); }
+
+    .cards-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .cards-header h3 { font-size: 16px; font-weight: 700; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+    .item-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
+    .item-card-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 10px; }
+    .item-name { font-size: 14px; font-weight: 600; }
+    .item-category { font-size: 11px; color: var(--text-muted); margin-top: 2px; text-transform: capitalize; }
+    .item-amount { font-size: 18px; font-weight: 700; color: var(--gold); text-align: right; }
+    .item-amount-sub { font-size: 11px; color: var(--text-muted); text-align: right; }
+    .sparkline { height: 40px; margin: 10px 0; display: block; }
+    .item-footer { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+    .tag { padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 500; }
+    .tag-green { background: var(--green-bg); color: var(--green); }
+    .tag-red { background: var(--red-bg); color: var(--red); }
+    .tag-amber { background: var(--amber-bg); color: var(--amber); }
+    .tag-dim { background: rgba(148,163,184,0.1); color: var(--text-muted); }
+
+    .alert-item { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 10px; display: flex; gap: 14px; align-items: flex-start; }
+    .alert-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+    .alert-dot.high { background: var(--red); }
+    .alert-dot.medium { background: var(--amber); }
+    .alert-dot.low { background: var(--green); }
+    .alert-title { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+    .alert-body { font-size: 12px; color: var(--text-dim); }
+    .alert-time { font-size: 11px; color: var(--text-muted); margin-left: auto; flex-shrink: 0; }
+
+    .drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; display: none; }
+    .drawer-overlay.open { display: block; }
+    .drawer { position: fixed; right: 0; top: 0; bottom: 0; width: min(480px, 100vw); background: var(--surface); border-left: 1px solid var(--border); z-index: 201; transform: translateX(100%); transition: transform 0.25s ease; display: flex; flex-direction: column; }
+    .drawer.open { transform: translateX(0); }
+    .drawer-header { padding: 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+    .drawer-header h3 { font-size: 15px; font-weight: 600; }
+    .drawer-close { background: none; border: none; color: var(--text-dim); font-size: 20px; cursor: pointer; }
+    .drawer-body { flex: 1; overflow-y: auto; padding: 20px; }
+
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 300; display: none; align-items: center; justify-content: center; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; width: min(440px, 90vw); max-height: 85vh; overflow-y: auto; }
+    .modal h3 { font-size: 16px; font-weight: 600; margin-bottom: 20px; }
+    .form-group { margin-bottom: 14px; }
+    .form-group label { display: block; font-size: 12px; font-weight: 600; color: var(--text-dim); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.4px; }
+    .form-group input, .form-group select { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); padding: 9px 12px; font-size: 13px; font-family: inherit; }
+    .form-group input:focus, .form-group select:focus { outline: none; border-color: var(--gold); }
+    .form-group select option { background: var(--surface2); }
+    .modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+
+    .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid transparent; border-top-color: currentColor; border-radius: 50%; animation: spin 0.6s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .analyzing-overlay { display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.88); z-index: 400; align-items: center; justify-content: center; flex-direction: column; gap: 16px; }
+    .analyzing-overlay.open { display: flex; }
+    .pulse-dot { width: 14px; height: 14px; border-radius: 50%; background: var(--gold); animation: pulse 1s ease-in-out infinite; }
+    @keyframes pulse { 0%,100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.6); opacity: 0.5; } }
+
+    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 20px; font-size: 13px; z-index: 500; transition: transform 0.25s; white-space: nowrap; }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+    .hidden { display: none !important; }
+    .empty-state { text-align: center; padding: 48px 20px; color: var(--text-muted); }
+    .empty-state .empty-icon { font-size: 36px; margin-bottom: 12px; }
+
+    @media (max-width: 1050px) {
+      #vaakil-upload-section { grid-template-columns: 1fr; }
+      .vaakil-hero { display: block; }
+      .vaakil-hero p { max-width: 680px; }
+      .upload-card, .upload-or, textarea.doc-paste, .image-preview,
+      #vaakil-upload-section > div[style^="margin:16px"],
+      #vaakil-upload-section .flag-row,
+      #vaakil-upload-section > div[style^="margin-top:20px"] { grid-column: auto; grid-row: auto; }
+      .upload-card { min-height: 300px; }
+      .results-view { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 900px) {
+      #vaakil-sidebar { width: 200px; }
+      #vaakil-page-inner { padding: 40px 32px 80px; }
+    }
+
+    @media (max-width: 680px) {
+      .topnav { gap: 12px; padding: 0 14px; }
+      .brand { font-size: 16px; }
+      .nav-tab { padding: 6px 10px; font-size: 12px; }
+      #vaakil-sidebar { display: none; }
+      #vaakil-page-inner { padding: 32px 18px 64px; }
+      .vaakil-hero { margin-bottom: 32px; }
+      .vaakil-hero h1 { font-size: 28px; }
+      .upload-card { padding: 32px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="brand">Arete<span>Sapiens</span></div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" id="vaakil-tab" onclick="showPage('vaakil',this)">⚖️ Vaakil <span class="nav-badge">FREE</span></button>
+    <button class="nav-tab" id="finance-tab-btn" onclick="showPage('finance',this)">💰 Financial Health</button>
+    <button class="nav-tab" id="bench-tab" onclick="showPage('bench',this);loadBench()">The Bench</button>
+  </div>
+</nav>
+
+<div class="analyzing-overlay" id="analyzing-overlay">
+  <div class="pulse-dot"></div>
+  <div style="font-size:16px;font-weight:600;color:var(--text)" id="overlay-title">Analyzing your document...</div>
+  <div style="font-size:13px;color:var(--text-dim)" id="overlay-step">Detecting jurisdiction · Checking legal compliance · Finding issues</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="main">
+
+<!-- ══════════════════════ VAAKIL PAGE ══════════════════════ -->
+<div id="vaakil-page" class="page active">
+<div id="vaakil-outer">
+
+<!-- History Sidebar -->
+<div id="vaakil-sidebar">
+  <div class="sidebar-header">
+    <h4>📁 Past Analyses</h4>
+    <button class="btn btn-outline btn-sm" onclick="startNewAnalysis()" title="New">+</button>
+  </div>
+  <div class="sidebar-list" id="sidebar-list">
+    <div style="padding:24px 12px;text-align:center;font-size:12px;color:var(--text-muted)">No analyses yet.<br>Upload a document to start.</div>
+  </div>
+</div>
+
+<!-- Main Content -->
+<div id="vaakil-main">
+<div id="vaakil-page-inner">
+
+  <div id="vaakil-upload-section">
+    <div class="vaakil-hero">
+      <div class="free-badge">FREE — No Account Needed</div>
+      <h1>Your <span>Legal Guardian</span></h1>
+      <p>Upload any legal document. Plain-language analysis, rights, violations found, and a response letter — instantly.</p>
+    </div>
+
+    <div class="upload-card" id="drop-zone"
+         onclick="document.getElementById('file-input').click()"
+         ondragover="event.preventDefault();this.classList.add('drag-over')"
+         ondragleave="this.classList.remove('drag-over')"
+         ondrop="handleFileDrop(event)">
+      <div class="upload-icon" id="upload-icon">📄</div>
+      <h3>Drop your document here</h3>
+      <p>Images (PNG/JPG), PDFs, or plain text files</p>
+      <input type="file" id="file-input" style="display:none" accept=".pdf,.txt,.png,.jpg,.jpeg,.webp" onchange="handleFileSelect(event)">
+      <div id="file-selected" style="display:none;color:var(--gold);font-size:13px;font-weight:600;margin-top:8px;"></div>
+    </div>
+    <div class="image-preview hidden" id="image-preview">
+      <span id="image-preview-name"></span>
+      <span style="margin-left:auto;font-size:11px;color:var(--text-muted)">Included with your document analysis</span>
+      <button onclick="clearFile()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:16px;padding:0">✕</button>
+    </div>
+
+    <div class="upload-or">or paste text below</div>
+
+    <textarea class="doc-paste" id="doc-text" placeholder="Paste your legal document text here... bank notice, eviction letter, court summons, employment letter, etc."></textarea>
+
+    <div style="margin:16px 0 8px;font-size:12px;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.4px">Country (optional — auto-detected)</div>
+    <div class="flag-row">
+      <button class="flag-btn" data-code="IN" onclick="selectCountry(this)">🇮🇳 India</button>
+      <button class="flag-btn" data-code="US" onclick="selectCountry(this)">🇺🇸 USA</button>
+      <button class="flag-btn" data-code="GB" onclick="selectCountry(this)">🇬🇧 UK</button>
+      <button class="flag-btn" data-code="AU" onclick="selectCountry(this)">🇦🇺 Australia</button>
+      <button class="flag-btn" data-code="CA" onclick="selectCountry(this)">🇨🇦 Canada</button>
+      <button class="flag-btn" data-code="NG" onclick="selectCountry(this)">🇳🇬 Nigeria</button>
+    </div>
+
+    <div style="margin-top:20px;display:flex;gap:10px;flex-wrap:wrap;">
+      <button class="btn btn-gold" id="analyze-btn" onclick="analyzeDocument()">
+        <span class="spinner hidden" id="analyze-spinner"></span>
+        Analyze Document
+      </button>
+      <button class="btn btn-outline" onclick="loadDemoDocument()">Load Demo</button>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div id="vaakil-results" class="results-view">
+    <div class="doc-banner">
+      <div class="doc-banner-icon" id="res-icon">📄</div>
+      <div class="doc-banner-meta">
+        <h3 id="res-doctype">—</h3>
+        <p id="res-filename">—</p>
+      </div>
+      <div class="doc-country">
+        <div class="country-name" id="res-country">—</div>
+        <div class="law" id="res-law">—</div>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h2><span class="dot"></span>Plain Summary</h2>
+      <p class="summary-text" id="res-summary"></p>
+      <p class="meaning-text" id="res-meaning"></p>
+    </div>
+
+    <div class="section-card">
+      <h2><span class="dot" style="background:var(--red)"></span>Issues Found</h2>
+      <div id="res-issues"></div>
+    </div>
+
+    <div class="section-card">
+      <h2><span class="dot" style="background:var(--green)"></span>Your Rights</h2>
+      <ul class="rights-list" id="res-rights"></ul>
+    </div>
+
+    <div class="section-card">
+      <h2><span class="dot"></span>7-Day Action Plan</h2>
+      <div id="res-actions"></div>
+    </div>
+
+    <div class="section-card">
+      <h2><span class="dot" style="background:var(--text-dim)"></span>Do You Need a Lawyer?</h2>
+      <div class="lawyer-card">
+        <div class="lawyer-icon" id="lawyer-icon">⚖️</div>
+        <div>
+          <div class="lawyer-verdict" id="lawyer-verdict"></div>
+          <div class="lawyer-text" id="lawyer-text"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h2><span class="dot"></span>Template Response Letter</h2>
+      <div class="template-box" id="res-template"></div>
+      <div style="display:flex;justify-content:flex-end;margin-top:8px">
+        <button class="btn btn-outline btn-sm" onclick="copyTemplate()">Copy Letter</button>
+      </div>
+      <div class="forum-link" id="res-forum"></div>
+    </div>
+
+    <div style="display:flex;gap:10px;margin-top:24px;flex-wrap:wrap;">
+      <button class="btn btn-gold" onclick="showChatView()">💬 Ask Follow-up Questions</button>
+      <button class="btn btn-outline" onclick="openBenchForAnalysis()">Find an advocate for this</button>
+      <button class="btn btn-outline" onclick="resetVaakil()">Analyze Another Document</button>
+    </div>
+  </div>
+
+  <!-- Chat -->
+  <div id="vaakil-chat" class="chat-view">
+    <div class="chat-nav">
+      <button class="btn btn-outline btn-sm" onclick="showResultsFromChat()">← Back to Analysis</button>
+    </div>
+    <div class="chat-doc-banner" id="chat-context">Ask anything about your document.</div>
+    <div class="chat-messages" id="chat-messages"></div>
+    <div class="chip-row" id="chat-chips">
+      <button class="chip" onclick="sendChip('Can they actually arrest me for not paying?')">Can they arrest me?</button>
+      <button class="chip" onclick="sendChip('What happens if I ignore this letter completely?')">What if I ignore it?</button>
+      <button class="chip" onclick="sendChip('How do I send the template response letter?')">How to send response?</button>
+      <button class="chip" onclick="sendChip('What are my strongest legal arguments here?')">My strongest arguments</button>
+      <button class="chip" onclick="sendChip('What is the worst that can legally happen to me?')">Worst case scenario?</button>
+    </div>
+    <div class="chat-input-row">
+      <input type="text" id="chat-input" placeholder="Ask about your rights, deadlines, what to do next..." onkeydown="if(event.key==='Enter')sendChat()">
+      <button class="btn btn-gold" onclick="sendChat()">Send</button>
+    </div>
+  </div>
+
+</div><!-- end vaakil-page-inner -->
+</div><!-- end vaakil-main -->
+</div><!-- end vaakil-outer -->
+</div><!-- end vaakil-page -->
+
+<!-- ══════════════════════ FINANCE PAGE ══════════════════════ -->
+<div id="finance-page" class="page">
+
+  <div class="paywall" id="finance-paywall">
+    <div class="paywall-icon">🔒</div>
+    <h2>Financial Health <span style="color:var(--gold)">Premium</span></h2>
+    <p>Track bills, subscriptions, warranties, and grocery prices with AI-powered insights.</p>
+    <ul class="paywall-features">
+      <li>Automatic bill spike detection with plain-language explanations</li>
+      <li>Subscription renewal alerts and value analysis</li>
+      <li>Warranty expiry tracking before it's too late</li>
+      <li>Grocery price trend analysis vs. inflation</li>
+      <li>Household health score with risk breakdown</li>
+    </ul>
+    <button class="trial-btn" id="trial-btn" onclick="activateTrial()">Try Free for 7 Days →</button>
+    <div class="trial-note">No credit card required. Premium: ₹299/month after trial.</div>
+  </div>
+
+  <div class="finance-dashboard" id="finance-dashboard">
+    <div class="finance-header">
+      <div class="score-ring">
+        <svg width="80" height="80" viewBox="0 0 80 80">
+          <circle cx="40" cy="40" r="34" fill="none" stroke="var(--border)" stroke-width="7"/>
+          <circle cx="40" cy="40" r="34" fill="none" stroke="var(--gold)" stroke-width="7"
+                  stroke-dasharray="213.6" stroke-dashoffset="213.6" stroke-linecap="round"
+                  id="score-arc" style="transition:stroke-dashoffset 0.8s ease"/>
+        </svg>
+        <div class="score-num"><span id="score-num">—</span><small>/100</small></div>
+      </div>
+      <div class="score-info">
+        <h2>Household Health <span class="score-level" id="score-level">—</span></h2>
+        <p id="score-detail">Loading...</p>
+      </div>
+    </div>
+
+    <div class="subtab-bar">
+      <button class="subtab active" onclick="showSubtab('feed',this)">📡 Feed</button>
+      <button class="subtab" onclick="showSubtab('bills',this)">⚡ Bills</button>
+      <button class="subtab" onclick="showSubtab('subs',this)">📦 Subscriptions</button>
+      <button class="subtab" onclick="showSubtab('warranties',this)">🛡️ Warranties</button>
+      <button class="subtab" onclick="showSubtab('groceries',this)">🛒 Groceries</button>
+    </div>
+
+    <div id="tab-feed">
+      <div class="cards-header"><h3>Alert Feed</h3><button class="btn btn-outline btn-sm" onclick="runChecks()">Run Checks</button></div>
+      <div id="alerts-list"></div>
+    </div>
+    <div id="tab-bills" class="hidden"><div class="cards-header"><h3>Bills</h3><button class="btn btn-gold btn-sm" onclick="openModal('bill')">+ Add Bill</button></div><div class="grid" id="bills-grid"></div></div>
+    <div id="tab-subs" class="hidden"><div class="cards-header"><h3>Subscriptions</h3><button class="btn btn-gold btn-sm" onclick="openModal('sub')">+ Add Subscription</button></div><div class="grid" id="subs-grid"></div></div>
+    <div id="tab-warranties" class="hidden"><div class="cards-header"><h3>Warranties</h3><button class="btn btn-gold btn-sm" onclick="openModal('warranty')">+ Add Warranty</button></div><div class="grid" id="warranties-grid"></div></div>
+    <div id="tab-groceries" class="hidden"><div class="cards-header"><h3>Grocery Prices</h3><button class="btn btn-gold btn-sm" onclick="openModal('grocery')">+ Add Item</button></div><div class="grid" id="groceries-grid"></div></div>
+  </div>
+
+</div><!-- end finance-page -->
+
+<div id="bench-page" class="page">
+  <div class="section-card">
+    <div class="free-badge">Sample directory for this demo, filter by what you can spend</div>
+    <h2>The Bench</h2>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px">
+      <select id="bench-jurisdiction" onchange="loadBench()"><option value="">All jurisdictions</option><option value="IN">India</option><option value="US">United States</option><option value="GB">United Kingdom</option><option value="AU">Australia</option></select>
+      <select id="bench-specialty" onchange="loadBench()"><option value="">All matters</option><option value="debt_collection">Debt collection</option><option value="eviction_notice">Eviction notice</option><option value="court_summons">Court summons</option><option value="employment_termination">Employment termination</option><option value="consumer_notice">Consumer notice</option></select>
+      <select id="bench-tier" onchange="loadBench()"><option value="">All budgets</option><option value="free_consult">Free first call</option><option value="budget">Budget</option><option value="standard">Standard</option><option value="premium">Premium</option></select>
+    </div>
+  </div>
+  <div id="bench-list" class="grid"></div>
+  <div class="modal-overlay" id="bench-request-modal"><div class="modal"><div id="bench-request-content"></div></div></div>
+</div>
+</div><!-- end main -->
+
+<!-- Drawer -->
+<div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-header"><h3 id="drawer-title">AI Insight</h3><button class="drawer-close" onclick="closeDrawer()">✕</button></div>
+  <div class="drawer-body" id="drawer-body"></div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal-overlay"><div class="modal" id="modal-content"></div></div>
+
+<script>
+// ══ STATE ══
+let currentPage = 'vaakil';
+let currentSubtab = 'feed';
+let selectedCountry = null;
+let selectedFile = null;
+let selectedFileIsImage = false;
+let currentSessionId = null;
+let currentAnalysis = null;
+
+// ══ SESSION HISTORY (localStorage) ══
+const STORAGE_KEY = 'as_vaakil_sessions_v2';
+let sessions = [];
+
+function loadSessions() {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) sessions = JSON.parse(stored) || [];
+  } catch { sessions = []; }
+  renderSidebar();
+}
+
+function saveSessions() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions.slice(0, 20))); } catch {}
+}
+
+function addSession(data, filename) {
+  const a = data.analysis || data;
+  const entry = {
+    id: data.session_id || genId(),
+    ts: new Date().toLocaleString(),
+    filename: filename || 'Document',
+    country_code: data.country_code || a.country_code || 'IN',
+    country_name: data.country_name || a.country || 'Unknown',
+    doc_type: data.document_type || a.doc_type || 'other',
+    data: data
+  };
+  sessions = [entry, ...sessions.filter(s => s.id !== entry.id)];
+  saveSessions();
+  renderSidebar();
+}
+
+function renderSidebar() {
+  const el = document.getElementById('sidebar-list');
+  const sidebar = document.getElementById('vaakil-sidebar');
+  sidebar.classList.toggle('empty', !sessions.length);
+  if (!sessions.length) {
+    el.innerHTML = '';
+    return;
+  }
+  const flags = {IN:'🇮🇳',US:'🇺🇸',GB:'🇬🇧',AU:'🇦🇺',CA:'🇨🇦',NG:'🇳🇬'};
+  el.innerHTML = sessions.map(s =>
+    `<div class="sidebar-item ${s.id === currentSessionId ? 'active' : ''}" onclick="loadSession('${s.id}')">
+      <div style="display:flex;align-items:center;gap:6px">
+        <span class="sidebar-item-flag">${flags[s.country_code]||'🌐'}</span>
+        <span style="font-size:10px;color:var(--text-muted)">${s.country_code}</span>
+        <span style="margin-left:auto;font-size:10px;color:var(--text-muted)">${s.ts.split(',')[0]}</span>
+      </div>
+      <div class="sidebar-item-title">${esc(s.filename)}</div>
+      <div class="sidebar-item-sub">${esc(s.doc_type.replace(/_/g,' '))}</div>
+    </div>`
+  ).join('');
+}
+
+function loadSession(id) {
+  const s = sessions.find(x => x.id === id);
+  if (!s) return;
+  currentSessionId = s.id;
+  currentAnalysis = s.data;
+  renderResults(s.data);
+  showResultsSection();
+  renderSidebar();
+}
+
+// ══ PAGE NAV ══
+function showPage(page, btn) {
+  currentPage = page;
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(page + '-page').classList.add('active');
+  if (btn) btn.classList.add('active');
+  if (page === 'finance') initFinancePage();
+}
+
+function showSubtab(tab, btn) {
+  currentSubtab = tab;
+  document.querySelectorAll('.subtab').forEach(t => t.classList.remove('active'));
+  ['feed','bills','subs','warranties','groceries'].forEach(t => {
+    const el = document.getElementById('tab-' + t);
+    if (el) el.classList.toggle('hidden', t !== tab);
+  });
+  if (btn) btn.classList.add('active');
+  loadSubtabData(tab);
+}
+
+async function loadBench() {
+  const jurisdiction = document.getElementById('bench-jurisdiction').value;
+  const specialty = document.getElementById('bench-specialty').value;
+  const tier = document.getElementById('bench-tier').value;
+  const params = new URLSearchParams();
+  if (jurisdiction) params.set('jurisdiction', jurisdiction);
+  if (specialty) params.set('specialty', specialty);
+  if (tier) params.set('tier', tier);
+  const res = await fetch('/api/advocates?' + params.toString());
+  const professionals = await res.json();
+  document.getElementById('bench-list').innerHTML = professionals.map(p => `<div class="item-card">
+    <div class="item-card-header"><div><div class="item-name">${esc(p.name)}</div><div class="item-category">${esc(p.title)}</div></div><div class="item-amount">${p.rating.toFixed(1)} / 5</div></div>
+    <p style="font-size:13px;color:var(--text-dim)">${esc(p.bio)}</p>
+    <div class="item-footer"><span class="tag tag-green">${esc(p.tier_label)}</span><span class="tag tag-dim">Usually ${p.response_time_hours}h</span><button class="btn btn-gold btn-sm" onclick="openBenchRequest('${p.id}')">Request a consultation</button></div>
+  </div>`).join('') || '<div class="empty-state">No sample professionals match these filters.</div>';
+}
+
+async function openBenchRequest(id) {
+  const professional = await (await fetch('/api/advocates/' + id)).json();
+  const context = currentAnalysis?.analysis?.summary || currentAnalysis?.analysis?.plain_summary || '';
+  document.getElementById('bench-request-content').innerHTML = `<h3>Request a consultation</h3><p style="font-size:13px;color:var(--text-dim)">This saves a demo request and does not contact ${esc(professional.name)}.</p>
+    <div class="form-group"><label>Case context</label><textarea id="bench-context">${esc(context)}</textarea></div>
+    <div class="form-group"><label>Your name</label><input id="bench-name"></div>
+    <div class="form-group"><label>Your email</label><input id="bench-email" type="email"></div>
+    <div class="form-group"><label>Preferred time</label><input id="bench-time" placeholder="Weekday evenings"></div>
+    <div class="modal-footer"><button class="btn btn-outline" onclick="closeBenchRequest()">Cancel</button><button class="btn btn-gold" onclick="submitBenchRequest('${professional.id}','${esc(professional.name)}','${professional.response_time_hours}','${professional.tier}')">Save request</button></div>`;
+  document.getElementById('bench-request-modal').classList.add('open');
+}
+
+function closeBenchRequest() { document.getElementById('bench-request-modal').classList.remove('open'); }
+
+async function submitBenchRequest(id, name, responseHours, tier) {
+  const payload = { professional_id:id, case_context:document.getElementById('bench-context').value.trim(), contact_name:document.getElementById('bench-name').value.trim(), contact_email:document.getElementById('bench-email').value.trim(), preferred_tier:tier, preferred_time:document.getElementById('bench-time').value.trim() };
+  const res = await fetch('/api/consultation-requests', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+  const data = await res.json();
+  if (!res.ok) { toast(data.error || 'Please complete every field.'); return; }
+  document.getElementById('bench-request-content').innerHTML = `<h3>Request saved</h3><p>${esc(name)} typically responds within ${responseHours} hours.</p><p style="font-size:13px;color:var(--text-dim)">This is a sample directory for the demo. No professional has been contacted.</p><div class="modal-footer"><button class="btn btn-gold" onclick="closeBenchRequest()">Done</button></div>`;
+}
+
+function openBenchForAnalysis() {
+  const specialty = currentAnalysis?.document_type || currentAnalysis?.analysis?.doc_type || '';
+  showPage('bench', document.getElementById('bench-tab'));
+  document.getElementById('bench-specialty').value = specialty;
+  document.getElementById('bench-jurisdiction').value = currentAnalysis?.country_code || currentAnalysis?.analysis?.country_code || '';
+  loadBench();
+}
+
+// ══ VAAKIL ══
+function selectCountry(btn) {
+  document.querySelectorAll('.flag-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  selectedCountry = btn.dataset.code;
+}
+
+function handleFileSelect(e) {
+  const f = e.target.files[0];
+  if (f) setFile(f);
+}
+function handleFileDrop(e) {
+  e.preventDefault();
+  document.getElementById('drop-zone').classList.remove('drag-over');
+  const f = e.dataTransfer.files[0];
+  if (f) setFile(f);
+}
+function setFile(f) {
+  selectedFile = f;
+  const isImg = f.type.startsWith('image/') || /\.(png|jpg|jpeg|webp)$/i.test(f.name);
+  const isPdf = f.type === 'application/pdf' || /\.pdf$/i.test(f.name);
+  selectedFileIsImage = isImg || isPdf;
+  document.getElementById('file-selected').style.display = 'block';
+  document.getElementById('file-selected').textContent = '✓ ' + f.name;
+  document.getElementById('upload-icon').textContent = isImg ? '🖼️' : (isPdf ? '📑' : '📄');
+  if (selectedFileIsImage) {
+    document.getElementById('image-preview-name').textContent = (isImg ? '🖼️ ' : '📑 ') + f.name;
+    document.getElementById('image-preview').classList.remove('hidden');
+  }
+}
+function clearFile() {
+  selectedFile = null; selectedFileIsImage = false;
+  document.getElementById('file-selected').style.display = 'none';
+  document.getElementById('file-input').value = '';
+  document.getElementById('upload-icon').textContent = '📄';
+  document.getElementById('image-preview').classList.add('hidden');
+}
+
+const LOADING_STEPS = [
+  'Reading legal document text...',
+  'Determining country jurisdiction...',
+  'Scanning statutory rulesets for violations...',
+  'Evaluating notice enforceability...',
+  'Drafting your template response...'
+];
+let _loadingTimer = null;
+
+function startLoadingCycle() {
+  let step = 0;
+  document.getElementById('overlay-step').textContent = LOADING_STEPS[0];
+  _loadingTimer = setInterval(() => {
+    step = (step + 1) % LOADING_STEPS.length;
+    document.getElementById('overlay-step').textContent = LOADING_STEPS[step];
+  }, 3500);
+}
+function stopLoadingCycle() {
+  if (_loadingTimer) { clearInterval(_loadingTimer); _loadingTimer = null; }
+}
+
+async function analyzeDocument() {
+  const text = document.getElementById('doc-text').value.trim();
+  if (!text && !selectedFile) { toast('Please paste text or upload a file'); return; }
+  const btn = document.getElementById('analyze-btn');
+  btn.disabled = true;
+  document.getElementById('analyze-spinner').classList.remove('hidden');
+  document.getElementById('analyzing-overlay').classList.add('open');
+  startLoadingCycle();
+  try {
+    const fd = new FormData();
+    if (selectedFile) fd.append('file', selectedFile);
+    if (text) fd.append('text', text);
+    if (selectedCountry) fd.append('country', selectedCountry);
+    fd.append('session_id', genId());
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 28000);
+    let res;
+    try {
+      res = await fetch('/api/vaakil/analyze', { method: 'POST', body: fd, signal: controller.signal });
+    } finally { clearTimeout(timer); }
+    const data = await res.json();
+    if (!res.ok) { toast(data.error || 'Analysis failed'); return; }
+    currentSessionId = data.session_id;
+    currentAnalysis = data;
+    const fname = selectedFile ? selectedFile.name : 'Pasted Document';
+    addSession(data, fname);
+    renderResults(data);
+    showResultsSection();
+  } catch (e) {
+    if (e.name === 'AbortError') toast('Analysis timed out — try pasting shorter text');
+    else toast('Network error: ' + e.message);
+  }
+  finally {
+    btn.disabled = false;
+    document.getElementById('analyze-spinner').classList.add('hidden');
+    document.getElementById('analyzing-overlay').classList.remove('open');
+    stopLoadingCycle();
+  }
+}
+
+function renderResults(data) {
+  // Support both outer envelope {country_code, analysis:{...}} and bare analysis object
+  const outer = (data && data.analysis) ? data : { analysis: data, country_code: data.country_code || data.country, country_name: data.country_name || data.country, document_type: data.doc_type };
+  const a = outer.analysis;
+  const docType = outer.document_type || a.doc_type || 'other';
+  const countryName = outer.country_name || a.country || '';
+  const countryCode = outer.country_code || a.country_code || '';
+
+  const icons = {debt_collection:'🏦',eviction_notice:'🏠',court_summons:'⚖️',employment_termination:'💼',consumer_notice:'🛍️',other:'📄'};
+  document.getElementById('res-icon').textContent = icons[docType] || '📄';
+
+  const severityColors = {high:'var(--red)', medium:'var(--amber)', low:'var(--green)'};
+  const sev = a.severity || 'medium';
+  document.getElementById('res-doctype').innerHTML = esc(docType.replace(/_/g,' ')) +
+    `<span style="margin-left:10px;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;text-transform:uppercase;background:${severityColors[sev]}22;color:${severityColors[sev]}">${sev} priority</span>`;
+  document.getElementById('res-filename').textContent = (selectedFile ? selectedFile.name : (outer.document_type ? 'Uploaded Document' : 'Demo Document')) + (countryName ? ' · ' + countryName : '');
+  document.getElementById('res-country').textContent = countryName + ' ' + getFlag(countryCode);
+  document.getElementById('res-law').textContent = outer.issuing_authority || (outer.signals_found||[]).join(', ') || '';
+
+  document.getElementById('res-summary').textContent = a.summary || a.plain_summary || '';
+  document.getElementById('res-meaning').textContent = a.what_it_means || '';
+
+  // enforceability_issues: string list (new format) or issues_found: object list (old format)
+  const enfIssues = a.enforceability_issues || [];
+  const structIssues = a.issues_found || [];
+  const issuesEl = document.getElementById('res-issues');
+  if (enfIssues.length > 0) {
+    issuesEl.innerHTML = enfIssues.map((issue, i) =>
+      `<div class="issue-item high" style="display:flex;gap:10px;align-items:flex-start">
+        <span style="color:var(--amber);font-size:18px;font-weight:700;line-height:1;flex-shrink:0;margin-top:2px">•</span>
+        <div style="font-size:13px;line-height:1.55;color:var(--text)">${esc(issue)}</div>
+      </div>`
+    ).join('');
+  } else if (structIssues.length > 0) {
+    issuesEl.innerHTML = structIssues.map(i => `<div class="issue-item ${i.severity}"><div class="issue-header"><span class="issue-badge ${i.severity}">${i.severity}</span><span class="issue-title">${esc(i.title)}</span></div>${i.excerpt?`<div class="issue-excerpt">"${esc(i.excerpt)}"</div>`:''}<div class="issue-explanation">${esc(i.explanation)}</div></div>`).join('');
+  } else {
+    issuesEl.innerHTML = '<div class="no-issues" style="color:var(--green);text-align:center;padding:20px"><div style="font-size:28px">✅</div><div style="font-size:14px;font-weight:600;margin-top:6px">No major violations found</div></div>';
+  }
+
+  // Rights
+  const rights = a.rights || a.your_rights || [];
+  document.getElementById('res-rights').innerHTML = rights.map(r=>`<li>${esc(r)}</li>`).join('');
+
+  // Action items: new format {days_from_now, action, why, urgent} or old format {day, action}
+  const actionItems = a.action_items || a.action_plan || [];
+  document.getElementById('res-actions').innerHTML = actionItems.map(ac => {
+    if (ac.days_from_now !== undefined) {
+      const urgentBadge = ac.urgent ? `<span style="font-size:9px;background:rgba(239,68,68,0.2);color:var(--red);padding:2px 6px;border-radius:6px;font-weight:700;text-transform:uppercase;margin-left:6px">Urgent</span>` : '';
+      return `<div class="action-item">
+        <div class="action-day">Day ${ac.days_from_now}${urgentBadge}</div>
+        <div><div class="action-text">${esc(ac.action)}</div>${ac.why?`<div style="font-size:11px;color:var(--text-muted);margin-top:3px">${esc(ac.why)}</div>`:''}</div>
+      </div>`;
+    }
+    return `<div class="action-item"><div class="action-day">${esc(ac.day)}</div><div class="action-text">${esc(ac.action)}</div></div>`;
+  }).join('');
+
+  const lv = document.getElementById('lawyer-verdict');
+  lv.className = 'lawyer-verdict ' + (a.lawyer_needed ? 'consult' : 'self');
+  lv.textContent = a.lawyer_needed ? 'Consult a Lawyer' : 'You Can Handle This';
+  document.getElementById('lawyer-icon').textContent = a.lawyer_needed ? '👨‍⚖️' : '✋';
+  document.getElementById('lawyer-text').textContent = a.lawyer_reason || a.lawyer_assessment || '';
+  document.getElementById('res-template').textContent = a.template_response || '';
+
+  // Free resources or forum link
+  const feEl = document.getElementById('res-forum');
+  const freeRes = a.free_resources || [];
+  if (freeRes.length > 0) {
+    feEl.innerHTML = freeRes.map(r =>
+      `<a href="${esc(r.url)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;margin-right:12px;color:var(--gold);text-decoration:none;font-size:12px">
+        🔗 <strong>${esc(r.name)}</strong> — ${esc(r.description)}
+      </a>`
+    ).join('<br style="margin:4px 0">');
+  } else if (a.forum) {
+    feEl.innerHTML = `📍 File at: <strong>${esc(a.forum)}</strong>${a.forum_url?` — <a href="${esc(a.forum_url)}" target="_blank" rel="noopener" style="color:var(--gold)">Visit →</a>`:''}`;
+  } else {
+    feEl.innerHTML = '';
+  }
+}
+
+function showResultsSection() {
+  document.getElementById('vaakil-upload-section').style.display = 'none';
+  document.getElementById('vaakil-results').style.display = 'grid';
+  document.getElementById('vaakil-chat').style.display = 'none';
+  window.scrollTo(0,0);
+}
+
+function showChatView() {
+  document.getElementById('vaakil-results').style.display = 'none';
+  document.getElementById('vaakil-chat').style.display = 'block';
+  if (currentAnalysis) {
+    const docType = currentAnalysis.document_type || (currentAnalysis.analysis && currentAnalysis.analysis.doc_type) || 'Document';
+    const country = currentAnalysis.country_name || (currentAnalysis.analysis && currentAnalysis.analysis.country) || '';
+    document.getElementById('chat-context').textContent = '💬 ' + docType.replace(/_/g,' ') + (country ? ' — ' + country : '');
+  }
+  const msgs = document.getElementById('chat-messages');
+  if (!msgs.children.length) {
+    appendMsg('assistant', "I've analyzed your document. Ask me anything — about your rights, what the deadlines mean, whether you need a lawyer, or how to send the response letter.");
+    document.getElementById('chat-chips').style.display = 'flex';
+  }
+  document.getElementById('chat-input').focus();
+}
+
+function showResultsFromChat() {
+  document.getElementById('vaakil-chat').style.display = 'none';
+  document.getElementById('vaakil-results').style.display = 'grid';
+}
+
+function resetVaakil() {
+  document.getElementById('vaakil-upload-section').style.display = 'grid';
+  document.getElementById('vaakil-results').style.display = 'none';
+  document.getElementById('vaakil-chat').style.display = 'none';
+  document.getElementById('doc-text').value = '';
+  document.getElementById('file-selected').style.display = 'none';
+  document.getElementById('file-input').value = '';
+  document.getElementById('chat-messages').innerHTML = '';
+  document.getElementById('chat-chips').style.display = 'flex';
+  clearFile();
+  currentSessionId = null; currentAnalysis = null;
+  document.querySelectorAll('.flag-btn').forEach(b => b.classList.remove('selected'));
+  selectedCountry = null;
+  renderSidebar();
+  window.scrollTo(0,0);
+}
+
+function startNewAnalysis() {
+  currentSessionId = null;
+  currentAnalysis = null;
+  resetVaakil();
+}
+
+async function sendChat() {
+  const inp = document.getElementById('chat-input');
+  const q = inp.value.trim();
+  if (!q || !currentSessionId) return;
+  inp.value = '';
+  appendMsg('user', q);
+  document.getElementById('chat-chips').style.display = 'none';
+  try {
+    const res = await fetch('/api/vaakil/chat', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({session_id:currentSessionId,question:q}) });
+    const d = await res.json();
+    appendMsg('assistant', d.answer || 'Could not answer that.');
+  } catch { appendMsg('assistant', 'Network error.'); }
+}
+
+function sendChip(q) {
+  document.getElementById('chat-input').value = q;
+  sendChat();
+}
+
+function appendMsg(role, text) {
+  const msgs = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = 'msg ' + role;
+  div.innerHTML = `<div class="msg-bubble">${esc(text)}</div>`;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+async function loadDemoDocument() {
+  document.getElementById('analyzing-overlay').classList.add('open');
+  document.getElementById('overlay-title').textContent = 'Loading demo analysis...';
+  document.getElementById('overlay-step').textContent = 'HDFC Bank debt recovery notice — India';
+  try {
+    const res = await fetch('/api/vaakil/demo');
+    if (res.ok) {
+      const data = await res.json();
+      currentSessionId = 'demo-session';
+      currentAnalysis = data;
+      renderResults(data);
+      showResultsSection();
+    } else { toast('Demo unavailable'); }
+  } catch { toast('Could not load demo'); }
+  finally {
+    document.getElementById('analyzing-overlay').classList.remove('open');
+    document.getElementById('overlay-title').textContent = 'Analyzing your document...';
+    document.getElementById('overlay-step').textContent = 'Detecting jurisdiction · Checking legal compliance · Finding issues';
+  }
+}
+
+function copyTemplate() {
+  navigator.clipboard.writeText(document.getElementById('res-template').textContent).then(() => toast('Letter copied!'));
+}
+
+// ══ FINANCE ══
+async function initFinancePage() {
+  try {
+    const res = await fetch('/api/premium-status');
+    const d = await res.json();
+    if (d.is_premium) {
+      document.getElementById('finance-paywall').style.display = 'none';
+      document.getElementById('finance-dashboard').style.display = 'block';
+      loadScore(); loadSubtabData('feed');
+    }
+  } catch {}
+}
+
+async function activateTrial() {
+  const btn = document.getElementById('trial-btn');
+  btn.disabled = true; btn.textContent = 'Activating...';
+  try {
+    await fetch('/api/activate-trial', { method: 'POST' });
+    document.getElementById('finance-paywall').style.display = 'none';
+    document.getElementById('finance-dashboard').style.display = 'block';
+    toast('7-day trial activated!');
+    loadScore(); loadSubtabData('feed');
+  } catch { btn.disabled = false; btn.textContent = 'Try Free for 7 Days →'; }
+}
+
+async function loadScore() {
+  try {
+    const res = await fetch('/api/risk-score');
+    const d = await res.json();
+    document.getElementById('score-num').textContent = d.score;
+    const lv = d.level.replace(/\s+/g, '-');
+    document.getElementById('score-level').textContent = d.level;
+    document.getElementById('score-level').className = 'score-level ' + lv;
+    document.getElementById('score-arc').style.strokeDashoffset = 213.6 - (d.score/100)*213.6;
+    const f = d.factors, parts = [];
+    if (f.bills.deductions > 0) parts.push(f.bills.detail);
+    if (f.subscriptions.deductions > 0) parts.push(f.subscriptions.detail);
+    if (f.warranties.deductions > 0) parts.push(f.warranties.detail);
+    document.getElementById('score-detail').textContent = parts.length ? parts.join(' · ') : 'All household metrics look healthy.';
+  } catch {}
+}
+
+function loadSubtabData(tab) {
+  if (tab==='feed') loadAlerts();
+  else if (tab==='bills') loadBills();
+  else if (tab==='subs') loadSubs();
+  else if (tab==='warranties') loadWarranties();
+  else if (tab==='groceries') loadGroceries();
+}
+
+async function loadAlerts() {
+  try {
+    const res = await fetch('/api/alerts');
+    const data = await res.json();
+    const el = document.getElementById('alerts-list');
+    if (!data.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><div>No alerts yet. Run checks to scan your data.</div></div>'; return; }
+    el.innerHTML = data.map(a => `<div class="alert-item"><div class="alert-dot ${a.severity}"></div><div><div class="alert-title">${esc(a.title)}</div><div class="alert-body">${esc(a.body)}</div></div><div class="alert-time">${timeAgo(a.created_at)}</div></div>`).join('');
+  } catch {}
+}
+
+async function loadBills() {
+  const res = await fetch('/api/bills');
+  const bills = await res.json();
+  const el = document.getElementById('bills-grid');
+  if (!bills.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">⚡</div><div>No bills yet</div></div>'; return; }
+  el.innerHTML = bills.map(b => {
+    const h = b.history||[], latest = h.length ? h[h.length-1] : null;
+    const recent = h.slice(-4,-1), avg = recent.length ? recent.reduce((s,x)=>s+x.amount,0)/recent.length : 0;
+    const spike = avg > 0 && latest ? (latest.amount-avg)/avg*100 : 0;
+    return `<div class="item-card">
+      <div class="item-card-header"><div><div class="item-name">${esc(b.name)}</div><div class="item-category">${esc(b.category||'')}</div></div><div><div class="item-amount">${latest?'₹'+latest.amount.toLocaleString('en-IN'):'—'}</div><div class="item-amount-sub">${latest?latest.month:''}</div></div></div>
+      ${barChart(h)}
+      <div class="item-footer">${spike>20?`<span class="tag tag-red">+${spike.toFixed(0)}% spike</span>`:'<span class="tag tag-green">Normal</span>'}
+      <button class="btn btn-outline btn-sm" onclick="explainItem('bill','${b.id}','${esc(b.name)}')">✨ Explain</button>
+      <button class="btn btn-danger btn-sm" onclick="delItem('bill','${b.id}')">Delete</button></div></div>`;
+  }).join('');
+}
+
+async function loadSubs() {
+  const res = await fetch('/api/subscriptions');
+  const subs = await res.json();
+  const el = document.getElementById('subs-grid');
+  if (!subs.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">📦</div><div>No subscriptions yet</div></div>'; return; }
+  const today = new Date();
+  el.innerHTML = subs.map(s => {
+    const days = Math.ceil((new Date(s.next_renewal) - today)/86400000);
+    const urg = days<=3?'tag-red':days<=7?'tag-amber':'tag-green';
+    const annual = s.billing_cycle==='monthly' ? s.amount*12 : s.amount;
+    return `<div class="item-card">
+      <div class="item-card-header"><div><div class="item-name">${esc(s.name)}</div><div class="item-category">${esc(s.billing_cycle||'')} · ${esc(s.category||'')}</div></div><div><div class="item-amount">₹${(s.amount||0).toLocaleString('en-IN')}</div><div class="item-amount-sub">₹${annual.toLocaleString('en-IN')}/yr</div></div></div>
+      <div class="item-footer"><span class="tag ${urg}">${days<=0?'Due today':days+'d to renew'}</span>
+      <button class="btn btn-outline btn-sm" onclick="explainItem('sub','${s.id}','${esc(s.name)}')">✨ Explain</button>
+      <button class="btn btn-danger btn-sm" onclick="delItem('sub','${s.id}')">Delete</button></div></div>`;
+  }).join('');
+}
+
+async function loadWarranties() {
+  const res = await fetch('/api/warranties');
+  const ws = await res.json();
+  const el = document.getElementById('warranties-grid');
+  if (!ws.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">🛡️</div><div>No warranties yet</div></div>'; return; }
+  const today = new Date();
+  el.innerHTML = ws.map(w => {
+    const days = Math.ceil((new Date(w.warranty_expiry) - today)/86400000);
+    const tag = days<0?'tag-red':days<=30?'tag-amber':'tag-green';
+    const label = days<0?`Expired ${Math.abs(days)}d ago`:`${days}d left`;
+    return `<div class="item-card">
+      <div class="item-card-header"><div><div class="item-name">${esc(w.item_name)}</div><div class="item-category">${esc(w.category||'')}</div></div><div><div class="item-amount">₹${(w.purchase_price||0).toLocaleString('en-IN')}</div><div class="item-amount-sub">purchase</div></div></div>
+      <div class="item-footer"><span class="tag ${tag}">${label}</span><span class="tag tag-dim">Exp: ${w.warranty_expiry}</span>
+      <button class="btn btn-outline btn-sm" onclick="explainItem('warranty','${w.id}','${esc(w.item_name)}')">✨ Explain</button>
+      <button class="btn btn-danger btn-sm" onclick="delItem('warranty','${w.id}')">Delete</button></div></div>`;
+  }).join('');
+}
+
+async function loadGroceries() {
+  const res = await fetch('/api/groceries');
+  const items = await res.json();
+  const el = document.getElementById('groceries-grid');
+  if (!items.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon">🛒</div><div>No items yet</div></div>'; return; }
+  el.innerHTML = items.map(g => {
+    const prices = g.price_history||[], latest = prices.length?prices[prices.length-1]:null, first = prices.length>1?prices[0]:null;
+    const chg = first&&latest?(latest.price-first.price)/first.price*100:0;
+    const tag = chg>10?'tag-red':chg<-5?'tag-green':'tag-dim';
+    return `<div class="item-card">
+      <div class="item-card-header"><div><div class="item-name">${esc(g.item_name)}</div><div class="item-category">${esc(g.unit||'')}</div></div><div><div class="item-amount">${latest?'₹'+latest.price:'—'}</div><div class="item-amount-sub">current</div></div></div>
+      ${lineChart(prices)}
+      <div class="item-footer">${prices.length>1?`<span class="tag ${tag}">${chg>0?'+':''}${chg.toFixed(1)}% overall</span>`:''}
+      <button class="btn btn-outline btn-sm" onclick="explainItem('grocery','${g.id}','${esc(g.item_name)}')">✨ Explain</button>
+      <button class="btn btn-danger btn-sm" onclick="delItem('grocery','${g.id}')">Delete</button></div></div>`;
+  }).join('');
+}
+
+async function explainItem(type, id, name) {
+  openDrawer('✨ ' + name);
+  document.getElementById('drawer-body').innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-dim)"><div class="spinner"></div><div style="margin-top:12px">Getting AI insight...</div></div>';
+  const ep = {bill:'bills',sub:'subscriptions',warranty:'warranties',grocery:'groceries'};
+  try {
+    const res = await fetch('/api/'+ep[type]+'/'+id+'/explain', {method:'POST'});
+    const d = await res.json();
+    document.getElementById('drawer-body').innerHTML = '<p style="line-height:1.7;color:var(--text)">'+esc(d.explanation||'No insight available.')+'</p>';
+  } catch { document.getElementById('drawer-body').innerHTML = '<p style="color:var(--red)">Could not load insight.</p>'; }
+}
+
+async function delItem(type, id) {
+  if (!confirm('Delete this item?')) return;
+  const ep = {bill:'bills',sub:'subscriptions',warranty:'warranties',grocery:'groceries'};
+  await fetch('/api/'+ep[type]+'/'+id, {method:'DELETE'});
+  loadSubtabData(currentSubtab);
+  if (['bill','sub','warranty'].includes(type)) loadScore();
+}
+
+async function runChecks() {
+  await fetch('/api/run-checks', {method:'POST'});
+  toast('Checks running...');
+  setTimeout(() => { loadAlerts(); loadScore(); }, 3000);
+}
+
+// ══ MODALS ══
+function openModal(type) {
+  const tpl = {
+    bill: `<h3>Add Bill</h3><div class="form-group"><label>Name</label><input id="m-name" placeholder="Electricity, Water..."></div><div class="form-group"><label>Category</label><select id="m-cat"><option>electricity</option><option>water</option><option>internet</option><option>gas</option><option>credit_card</option><option>other</option></select></div><div class="modal-footer"><button class="btn btn-outline" onclick="closeModal()">Cancel</button><button class="btn btn-gold" onclick="submitBill()">Add</button></div>`,
+    sub: `<h3>Add Subscription</h3><div class="form-group"><label>Name</label><input id="m-name" placeholder="Netflix, Spotify..."></div><div class="form-group"><label>Amount (₹)</label><input id="m-amount" type="number" placeholder="799"></div><div class="form-group"><label>Billing Cycle</label><select id="m-cycle"><option value="monthly">Monthly</option><option value="annual">Annual</option></select></div><div class="form-group"><label>Next Renewal</label><input id="m-renewal" type="date"></div><div class="form-group"><label>Category</label><select id="m-cat"><option>streaming</option><option>software</option><option>fitness</option><option>news</option><option>other</option></select></div><div class="modal-footer"><button class="btn btn-outline" onclick="closeModal()">Cancel</button><button class="btn btn-gold" onclick="submitSub()">Add</button></div>`,
+    warranty: `<h3>Add Warranty</h3><div class="form-group"><label>Item Name</label><input id="m-name" placeholder="MacBook, Samsung TV..."></div><div class="form-group"><label>Purchase Price (₹)</label><input id="m-price" type="number"></div><div class="form-group"><label>Purchase Date</label><input id="m-purchase" type="date"></div><div class="form-group"><label>Warranty Expiry</label><input id="m-expiry" type="date"></div><div class="form-group"><label>Category</label><select id="m-cat"><option>electronics</option><option>appliance</option><option>vehicle</option><option>other</option></select></div><div class="modal-footer"><button class="btn btn-outline" onclick="closeModal()">Cancel</button><button class="btn btn-gold" onclick="submitWarranty()">Add</button></div>`,
+    grocery: `<h3>Add Grocery Item</h3><div class="form-group"><label>Item Name</label><input id="m-name" placeholder="Milk, Eggs, Rice..."></div><div class="form-group"><label>Current Price (₹)</label><input id="m-price" type="number"></div><div class="form-group"><label>Unit</label><select id="m-unit"><option>litre</option><option>kg</option><option>pack</option><option>piece</option></select></div><div class="form-group"><label>Usual Store</label><input id="m-store" placeholder="BigBasket, DMart..."></div><div class="modal-footer"><button class="btn btn-outline" onclick="closeModal()">Cancel</button><button class="btn btn-gold" onclick="submitGrocery()">Add</button></div>`,
+  };
+  document.getElementById('modal-content').innerHTML = tpl[type] || '';
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+
+async function submitBill() {
+  const name = document.getElementById('m-name').value.trim(), cat = document.getElementById('m-cat').value;
+  if (!name) { toast('Name required'); return; }
+  await fetch('/api/bills',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,category:cat,history:[]})});
+  closeModal(); loadBills();
+}
+async function submitSub() {
+  const name=document.getElementById('m-name').value.trim(), amount=parseFloat(document.getElementById('m-amount').value), renewal=document.getElementById('m-renewal').value, cycle=document.getElementById('m-cycle').value, cat=document.getElementById('m-cat').value;
+  if (!name||!amount||!renewal){toast('All fields required');return;}
+  await fetch('/api/subscriptions',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,amount,next_renewal:renewal,billing_cycle:cycle,category:cat})});
+  closeModal(); loadSubs(); loadScore();
+}
+async function submitWarranty() {
+  const name=document.getElementById('m-name').value.trim(), price=parseFloat(document.getElementById('m-price').value), purchase=document.getElementById('m-purchase').value, expiry=document.getElementById('m-expiry').value, cat=document.getElementById('m-cat').value;
+  if (!name||!price||!purchase||!expiry){toast('All fields required');return;}
+  await fetch('/api/warranties',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({item_name:name,purchase_price:price,purchase_date:purchase,warranty_expiry:expiry,category:cat})});
+  closeModal(); loadWarranties(); loadScore();
+}
+async function submitGrocery() {
+  const name=document.getElementById('m-name').value.trim(), price=parseFloat(document.getElementById('m-price').value)||0, unit=document.getElementById('m-unit').value, store=document.getElementById('m-store').value;
+  if (!name){toast('Name required');return;}
+  await fetch('/api/groceries',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({item_name:name,price,unit,usual_store:store})});
+  closeModal(); loadGroceries();
+}
+
+// ══ DRAWER ══
+function openDrawer(title) {
+  document.getElementById('drawer-title').textContent = title;
+  document.getElementById('drawer-overlay').classList.add('open');
+  document.getElementById('drawer').classList.add('open');
+}
+function closeDrawer() {
+  document.getElementById('drawer-overlay').classList.remove('open');
+  document.getElementById('drawer').classList.remove('open');
+}
+
+// ══ CHARTS ══
+function barChart(history) {
+  if (!history||history.length<2) return '';
+  const vals = history.slice(-6).map(h=>h.amount);
+  const max = Math.max(...vals); const w=32,gap=4;
+  const W = vals.length*(w+gap)-gap;
+  const bars = vals.map((v,i) => {
+    const h=Math.max(4,Math.round((v/max)*36)), isLast=i===vals.length-1;
+    const avg3=vals.slice(Math.max(0,i-3),i).reduce((s,x)=>s+x,0)/Math.min(3,i||1);
+    const spiked=i>0&&v>avg3*1.2;
+    const fill=spiked?'#EF4444':(isLast?'#F59E0B':'#334155');
+    return `<rect x="${i*(w+gap)}" y="${40-h}" width="${w}" height="${h}" rx="3" fill="${fill}"/>`;
+  }).join('');
+  return `<svg class="sparkline" width="${W}" height="40" viewBox="0 0 ${W} 40">${bars}</svg>`;
+}
+
+function lineChart(ph) {
+  if (!ph||ph.length<2) return '';
+  const vals=ph.slice(-6).map(p=>p.price);
+  const mn=Math.min(...vals), mx=Math.max(...vals), range=mx-mn||1;
+  const W=240,H=40,pad=4, step=(W-pad*2)/(vals.length-1);
+  const pts=vals.map((v,i)=>`${pad+i*step},${H-pad-((v-mn)/range)*(H-pad*2)}`).join(' ');
+  const [lx,ly]=pts.split(' ').pop().split(',');
+  return `<svg class="sparkline" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><polyline points="${pts}" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linejoin="round"/><circle cx="${lx}" cy="${ly}" r="3" fill="#F59E0B"/></svg>`;
+}
+
+// ══ UTILS ══
+function esc(s) { if(!s)return''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function genId() { return Math.random().toString(36).substr(2,9)+Date.now().toString(36); }
+function getFlag(c) { return {IN:'🇮🇳',US:'🇺🇸',GB:'🇬🇧',AU:'🇦🇺',CA:'🇨🇦',NG:'🇳🇬'}[c]||''; }
+function timeAgo(iso) {
+  if(!iso)return''; const m=Math.floor((Date.now()-new Date(iso))/60000);
+  if(m<1)return'just now'; if(m<60)return m+'m ago';
+  const h=Math.floor(m/60); if(h<24)return h+'h ago'; return Math.floor(h/24)+'d ago';
+}
+let _tt; function toast(msg) { const e=document.getElementById('toast'); e.textContent=msg; e.classList.add('show'); clearTimeout(_tt); _tt=setTimeout(()=>e.classList.remove('show'),2800); }
+
+document.getElementById('modal-overlay').addEventListener('click', e => { if(e.target===document.getElementById('modal-overlay'))closeModal(); });
+
+// Load session history on boot
+loadSessions();
+</script>
+</body>
+</html>

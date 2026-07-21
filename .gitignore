@@ -1,0 +1,32 @@
+# Node / Next.js
+node_modules
+.next
+.env.local
+npm-debug.log*
+tsconfig.tsbuildinfo
+.test-dist
+
+# Python / Flask
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+*.egg-info/
+dist/
+.pytest_cache/
+
+# Shared secrets and deploy config
+.env
+cloud-env.yaml
+
+# Large cached model data (tesseract downloads this at runtime, don't commit it)
+*.traineddata
+
+# Editor/session artifacts
+.claude/
+.agents/
+
+# Accidental command-output artifacts
+node
+claim-guardian@0.1.0
