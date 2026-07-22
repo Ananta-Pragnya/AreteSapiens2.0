@@ -901,23 +901,30 @@ textarea:focus {
 }
 
 /* the registry, umbrella page for Vaakil and Claim Guardian, deliberately its
-   own identity (ink/bone/patina/brass), distinct from either product's own
-   palette below it */
+   own identity, matte black with a mechanical instrument feel, distinct from
+   either product's own palette below it */
 
 .hub-shell {
-  --hub-ink: #14120f;
-  --hub-ink-deep: #0b0a08;
-  --hub-ink-raised: #1c1914;
-  --hub-bone: #ede6d8;
-  --hub-stone: #9c9186;
-  --hub-stone-dim: #6b6459;
-  --hub-line: rgba(237, 230, 216, 0.09);
-  --hub-line-strong: rgba(237, 230, 216, 0.16);
-  --hub-patina: #7fa08c;
-  --hub-patina-deep: #547566;
-  --hub-patina-soft: rgba(127, 160, 140, 0.13);
-  --hub-brass: #b8934f;
-  --hub-brass-soft: rgba(184, 147, 79, 0.13);
+  --hub-ink: #0a0a0b;
+  --hub-ink-deep: #050506;
+  --hub-ink-raised: #17171a;
+  --hub-ink-raised-hover: #1f1f23;
+  --hub-bone: #ece7dd;
+  --hub-stone: #8f8a82;
+  --hub-stone-dim: #5c5850;
+  --hub-line: rgba(236, 231, 221, 0.06);
+  --hub-line-strong: rgba(236, 231, 221, 0.14);
+  --hub-patina: #6be3a3;
+  --hub-patina-deep: #3f9d6c;
+  --hub-patina-soft: rgba(107, 227, 163, 0.12);
+  --hub-patina-glow: rgba(107, 227, 163, 0.4);
+  --hub-brass: #e0ab4a;
+  --hub-brass-deep: #a87a2e;
+  --hub-brass-soft: rgba(224, 171, 74, 0.12);
+  --hub-brass-glow: rgba(224, 171, 74, 0.38);
+  --hub-radius: 28px;
+  --hub-radius-sm: 16px;
+  --hub-ease: cubic-bezier(0.16, 1, 0.3, 1);
 
   background: var(--hub-ink);
   color: var(--hub-bone);
@@ -925,8 +932,8 @@ textarea:focus {
   font-size: 17px;
   line-height: 1.65;
   min-height: 100vh;
-  background-image: radial-gradient(ellipse 900px 500px at 82% 8%, rgba(127, 160, 140, 0.07), transparent 60%),
-    radial-gradient(ellipse 700px 500px at 8% 90%, rgba(184, 147, 79, 0.05), transparent 60%);
+  background-image: radial-gradient(ellipse 900px 500px at 82% 8%, rgba(107, 227, 163, 0.06), transparent 60%),
+    radial-gradient(ellipse 700px 500px at 8% 90%, rgba(224, 171, 74, 0.05), transparent 60%);
   background-attachment: fixed;
 }
 
@@ -940,16 +947,22 @@ textarea:focus {
   list-style: none;
 }
 
+.hub-shell button {
+  transition: all 0.3s var(--hub-ease);
+}
+
 .hub-view {
-  animation: hubFadeIn 0.3s ease;
+  animation: hubFadeIn 0.5s var(--hub-ease);
 }
 
 @keyframes hubFadeIn {
   from {
     opacity: 0;
+    transform: translateY(10px);
   }
   to {
     opacity: 1;
+    transform: translateY(0);
   }
 }
 
@@ -977,6 +990,11 @@ textarea:focus {
   width: 32px;
   height: 32px;
   flex-shrink: 0;
+  transition: filter 0.3s var(--hub-ease);
+}
+
+.hub-brand:hover .hub-brand-mark {
+  filter: drop-shadow(0 0 8px var(--hub-patina-glow));
 }
 
 .hub-brand-name {
@@ -1007,8 +1025,12 @@ textarea:focus {
   color: var(--hub-stone);
 }
 
+.hub-top-nav a {
+  transition: color 0.3s var(--hub-ease);
+}
+
 .hub-top-nav a:hover {
-  color: var(--hub-bone);
+  color: var(--hub-patina);
 }
 
 /* hero */
@@ -1040,6 +1062,7 @@ textarea:focus {
   width: 16px;
   height: 1px;
   background: var(--hub-patina);
+  box-shadow: 0 0 6px var(--hub-patina-glow);
 }
 
 .hub-hero h1 {
@@ -1079,17 +1102,46 @@ textarea:focus {
   font-weight: 600;
 }
 
-/* seal */
+/* seal, a mechanical instrument dial rather than a static stamp */
 
 .hub-seal-wrap {
   display: flex;
   justify-content: center;
   align-items: center;
+  position: relative;
 }
 
 .hub-seal {
   width: 340px;
   height: 340px;
+  position: relative;
+  z-index: 1;
+}
+
+.hub-seal-glow {
+  fill: var(--hub-patina-glow);
+  filter: blur(22px);
+  animation: hubGlowPulse 5s ease-in-out infinite;
+}
+
+@keyframes hubGlowPulse {
+  0%, 100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.hub-seal-dial {
+  transform-origin: 100px 100px;
+  animation: hubSealRotate 120s linear infinite;
+}
+
+@keyframes hubSealRotate {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .hub-seal-ring {
@@ -1101,7 +1153,7 @@ textarea:focus {
   stroke: var(--hub-patina);
   stroke-dasharray: 900;
   stroke-dashoffset: 900;
-  animation: hubDrawRing 2.2s ease forwards 0.2s;
+  animation: hubDrawRing 2.4s var(--hub-ease) forwards 0.2s;
 }
 
 @keyframes hubDrawRing {
@@ -1115,10 +1167,16 @@ textarea:focus {
   stroke-width: 1;
 }
 
+.hub-seal-tick-major {
+  stroke: var(--hub-patina);
+  stroke-width: 1.6;
+  filter: drop-shadow(0 0 3px var(--hub-patina-glow));
+}
+
 .hub-seal-word {
   fill: var(--hub-stone);
   font-family: var(--font-plex-mono);
-  font-size: 8px;
+  font-size: 7.5px;
   letter-spacing: 3px;
 }
 
@@ -1154,23 +1212,28 @@ textarea:focus {
   flex-direction: column;
   padding: 34px;
   border: 1px solid var(--hub-line-strong);
+  border-radius: var(--hub-radius);
+  background: var(--hub-ink-raised);
   cursor: pointer;
-  transition: background 0.15s, border-color 0.15s, transform 0.15s;
+  transition: background 0.4s var(--hub-ease), border-color 0.4s var(--hub-ease),
+    transform 0.4s var(--hub-ease), box-shadow 0.4s var(--hub-ease);
   position: relative;
   min-height: 360px;
 }
 
 .hub-reg-row:hover {
-  background: var(--hub-ink-raised);
-  transform: translateY(-3px);
+  background: var(--hub-ink-raised-hover);
+  transform: translateY(-4px);
 }
 
 .hub-reg-row.hub-mod-a:hover {
   border-color: var(--hub-patina-deep);
+  box-shadow: 0 24px 60px -24px var(--hub-patina-glow);
 }
 
 .hub-reg-row.hub-mod-b:hover {
-  border-color: var(--hub-brass);
+  border-color: var(--hub-brass-deep);
+  box-shadow: 0 24px 60px -24px var(--hub-brass-glow);
 }
 
 .hub-reg-num {
@@ -1194,10 +1257,12 @@ textarea:focus {
 
 .hub-reg-row.hub-mod-a .hub-accent-dot {
   background: var(--hub-patina);
+  box-shadow: 0 0 6px var(--hub-patina-glow);
 }
 
 .hub-reg-row.hub-mod-b .hub-accent-dot {
   background: var(--hub-brass);
+  box-shadow: 0 0 6px var(--hub-brass-glow);
 }
 
 .hub-reg-title-block {
@@ -1232,22 +1297,22 @@ textarea:focus {
   font-size: 10.5px;
   color: var(--hub-stone);
   border: 1px solid var(--hub-line-strong);
-  border-radius: 3px;
-  padding: 6px 11px;
+  border-radius: 999px;
+  padding: 6px 13px;
 }
 
 .hub-reg-arrow {
   font-family: var(--font-plex-mono);
   font-size: 20px;
   color: var(--hub-stone);
-  transition: transform 0.15s;
+  transition: transform 0.4s var(--hub-ease), color 0.4s var(--hub-ease);
   margin-top: auto;
   padding-top: 16px;
   border-top: 1px solid var(--hub-line);
 }
 
 .hub-reg-row:hover .hub-reg-arrow {
-  transform: translateX(4px);
+  transform: translateX(6px);
 }
 
 .hub-reg-row.hub-mod-a:hover .hub-reg-arrow {
@@ -1309,10 +1374,14 @@ textarea:focus {
   gap: 7px;
   cursor: pointer;
   letter-spacing: 0.02em;
+  padding: 8px 16px;
+  border-radius: 999px;
+  transition: color 0.3s var(--hub-ease), background 0.3s var(--hub-ease);
 }
 
 .hub-back-pill:hover {
   color: var(--hub-bone);
+  background: var(--hub-ink-raised);
 }
 
 .hub-prod-hero {
@@ -1329,8 +1398,8 @@ textarea:focus {
   font-size: 10.5px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  padding: 7px 13px;
-  border-radius: 3px;
+  padding: 7px 15px;
+  border-radius: 999px;
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -1350,6 +1419,7 @@ textarea:focus {
 
 .hub-badge.hub-mod-a .hub-dot {
   background: var(--hub-patina);
+  box-shadow: 0 0 6px var(--hub-patina-glow);
 }
 
 .hub-badge.hub-mod-b {
@@ -1359,6 +1429,7 @@ textarea:focus {
 
 .hub-badge.hub-mod-b .hub-dot {
   background: var(--hub-brass);
+  box-shadow: 0 0 6px var(--hub-brass-glow);
 }
 
 .hub-prod-hero h1 {
@@ -1419,11 +1490,12 @@ textarea:focus {
   font-weight: 600;
   letter-spacing: 0.02em;
   padding: 16px;
-  border-radius: 3px;
+  border-radius: 999px;
   margin-bottom: 12px;
   cursor: pointer;
   width: 100%;
   border: 0;
+  transition: all 0.35s var(--hub-ease);
 }
 
 .hub-prod-cta.hub-primary.hub-mod-a {
@@ -1432,7 +1504,9 @@ textarea:focus {
 }
 
 .hub-prod-cta.hub-primary.hub-mod-a:hover {
-  background: #93b29e;
+  background: #85ecb4;
+  box-shadow: 0 12px 32px -8px var(--hub-patina-glow);
+  transform: translateY(-2px);
 }
 
 .hub-prod-cta.hub-primary.hub-mod-b {
@@ -1441,7 +1515,9 @@ textarea:focus {
 }
 
 .hub-prod-cta.hub-primary.hub-mod-b:hover {
-  background: #c7a466;
+  background: #ecc06c;
+  box-shadow: 0 12px 32px -8px var(--hub-brass-glow);
+  transform: translateY(-2px);
 }
 
 .hub-prod-cta.hub-ghost {
@@ -1452,6 +1528,7 @@ textarea:focus {
 
 .hub-prod-cta.hub-ghost:hover {
   border-color: var(--hub-stone);
+  background: var(--hub-ink-raised);
 }
 
 .hub-prod-note {
@@ -1476,21 +1553,26 @@ textarea:focus {
   letter-spacing: 0.12em;
   padding-bottom: 20px;
   border-bottom: 1px solid var(--hub-line-strong);
+  margin-bottom: 20px;
 }
 
 .hub-also-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
 }
 
 .hub-also-card {
-  padding: 28px 24px 28px 0;
-  border-bottom: 1px solid var(--hub-line);
+  padding: 24px;
+  border: 1px solid var(--hub-line);
+  border-radius: var(--hub-radius-sm);
+  background: var(--hub-ink-raised);
+  transition: border-color 0.35s var(--hub-ease), transform 0.35s var(--hub-ease);
 }
 
-.hub-also-card:not(:last-child) {
-  border-right: 1px solid var(--hub-line);
-  padding-right: 24px;
+.hub-also-card:hover {
+  border-color: var(--hub-line-strong);
+  transform: translateY(-2px);
 }
 
 .hub-also-card h4 {
@@ -1548,10 +1630,5 @@ textarea:focus {
   }
   .hub-also-grid {
     grid-template-columns: 1fr;
-  }
-  .hub-also-card,
-  .hub-also-card:not(:last-child) {
-    border-right: none;
-    padding-right: 0;
   }
 }

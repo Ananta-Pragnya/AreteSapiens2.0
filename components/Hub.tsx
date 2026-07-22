@@ -8,31 +8,60 @@ type Props = {
 
 type Subview = 'home' | 'vaakil' | 'claimguardian';
 
+function tickPoint(deg: number, radius: number) {
+  const rad = (deg * Math.PI) / 180;
+  return { x: 100 + radius * Math.sin(rad), y: 100 - radius * Math.cos(rad) };
+}
+
 function Seal() {
+  const majorDegrees = Array.from({ length: 12 }, (_, i) => i * 30);
+  const minorDegrees = Array.from({ length: 60 }, (_, i) => i * 6).filter((deg) => deg % 30 !== 0);
+
   return (
     <svg className="hub-seal" viewBox="0 0 200 200">
-      <circle className="hub-seal-ring draw" cx="100" cy="100" r="92" />
-      <circle className="hub-seal-ring" cx="100" cy="100" r="78" />
-      <g className="hub-seal-tick">
-        <line x1="100" y1="14" x2="100" y2="22" />
-        <line x1="186" y1="100" x2="178" y2="100" />
-        <line x1="100" y1="186" x2="100" y2="178" />
-        <line x1="14" y1="100" x2="22" y2="100" />
-        <line x1="158.7" y1="41.3" x2="153" y2="47" />
-        <line x1="158.7" y1="158.7" x2="153" y2="153" />
-        <line x1="41.3" y1="158.7" x2="47" y2="153" />
-        <line x1="41.3" y1="41.3" x2="47" y2="47" />
+      <circle className="hub-seal-glow" cx="100" cy="100" r="90" />
+      <circle className="hub-seal-ring" cx="100" cy="100" r="64" />
+      <g className="hub-seal-dial">
+        {minorDegrees.map((deg) => {
+          const outer = tickPoint(deg, 92);
+          const inner = tickPoint(deg, 87);
+          return (
+            <line
+              key={`minor-${deg}`}
+              className="hub-seal-tick"
+              x1={outer.x}
+              y1={outer.y}
+              x2={inner.x}
+              y2={inner.y}
+            />
+          );
+        })}
+        {majorDegrees.map((deg) => {
+          const outer = tickPoint(deg, 92);
+          const inner = tickPoint(deg, 80);
+          return (
+            <line
+              key={`major-${deg}`}
+              className="hub-seal-tick-major"
+              x1={outer.x}
+              y1={outer.y}
+              x2={inner.x}
+              y2={inner.y}
+            />
+          );
+        })}
+        <circle className="hub-seal-ring draw" cx="100" cy="100" r="92" />
       </g>
-      <path id="hubSealPath" d="M 100,100 m -68,0 a 68,68 0 1,1 136,0 a 68,68 0 1,1 -136,0" fill="none" />
+      <path id="hubSealPath" d="M 100,100 m -50,0 a 50,50 0 1,1 100,0 a 50,50 0 1,1 -100,0" fill="none" />
       <text className="hub-seal-word">
         <textPath href="#hubSealPath" startOffset="2%">
           ARETE SAPIENS · PERSONAL LIFE OS · ARETE SAPIENS ·{' '}
         </textPath>
       </text>
-      <text x="100" y="94" textAnchor="middle" className="hub-seal-center" fontWeight="600" fontSize="22" fill="#EDE6D8">
+      <text x="100" y="96" textAnchor="middle" className="hub-seal-center" fontWeight="600" fontSize="22" fill="#ECE7DD">
         AS
       </text>
-      <text x="100" y="114" textAnchor="middle" fontFamily="IBM Plex Mono" fontSize="8" letterSpacing="2" fill="#7FA08C">
+      <text x="100" y="116" textAnchor="middle" fontFamily="var(--font-plex-mono)" fontSize="8" letterSpacing="2" fill="#6be3a3">
         EST. INDEX I
       </text>
     </svg>
@@ -42,9 +71,9 @@ function Seal() {
 function BrandMark() {
   return (
     <svg className="hub-brand-mark" viewBox="0 0 32 32">
-      <circle cx="16" cy="16" r="14.5" fill="none" stroke="#7FA08C" strokeWidth="1.2" />
-      <circle cx="16" cy="16" r="10.5" fill="none" stroke="#6B6459" strokeWidth="0.8" />
-      <text x="16" y="20" textAnchor="middle" fontFamily="var(--font-display)" fontWeight="600" fontSize="11" fill="#EDE6D8">
+      <circle cx="16" cy="16" r="14.5" fill="none" stroke="#6be3a3" strokeWidth="1.2" />
+      <circle cx="16" cy="16" r="10.5" fill="none" stroke="#5c5850" strokeWidth="0.8" />
+      <text x="16" y="20" textAnchor="middle" fontFamily="var(--font-display)" fontWeight="600" fontSize="11" fill="#ECE7DD">
         AS
       </text>
     </svg>
