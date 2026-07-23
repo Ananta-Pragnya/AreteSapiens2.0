@@ -1,46 +1,5 @@
-# AreteSapiens 2.0
-
-Two tools, one philosophy: read what was actually written, check it against the actual law that
-governs it, and show the check, not just a verdict.
-
-- **Claim Guardian**, photograph an insurance denial or delay letter. It identifies the
-  regulation that applies (US-California, EU-Germany, or India/IRDAI), flags violations quoted
-  from your own policy and letter, and drafts an appeal. Every citation traces to real statutory
-  text pulled from official sources, not a paraphrase, and the compliance-check code it generates
-  is shown on screen, not hidden behind a result.
-- **Vaakil** (inside Arete Sapiens), photograph or paste a legal notice (debt collection,
-  eviction, court summons, employment termination, consumer notice). It identifies the
-  jurisdiction, quotes the exact threatening or non-compliant language back to you, and drafts a
-  response. Arete Sapiens also tracks bills, subscriptions, warranties, and grocery prices as a
-  small household "financial health" suite.
-- **The Bench**, reachable from either product once a review is done. A labeled sample directory
-  of professionals filterable by jurisdiction, specialty, and budget. Submitting a request only
-  saves it on your device, it does not contact anyone, there is no real payment flow.
-
-Both products are reachable from one address once running: **http://localhost:3000**. Vaakil
-lives at `/vaakil` on that same origin, proxied through from a Flask service running behind the
-scenes, so there's only ever one link to open.
-
-## How it's built
-
-- **Claim Guardian** (Next.js/TypeScript) runs on a local-first engine that needs no API key at
-  all: real OCR (Tesseract) plus regex/heuristic extraction reads the document, a from-scratch
-  BM25 retriever (no embeddings model) grounds every citation in the actual regulation text, and a
-  LangGraph pipeline generates the compliance-check script and executes it in a sandboxed VM,
-  retrying once if a GPT-generated script fails. An OpenAI key is optional and only upgrades
-  extraction, narrative parsing, and drafting quality, it never replaces the underlying checks.
-- **Vaakil / Arete Sapiens** (Flask/Python) runs its real analysis on Groq's `gpt-oss-20b`,
-  escalating to `gpt-oss-120b` if a response fails to parse, with a fully deterministic rule-based
-  fallback underneath that so a bare photo upload (no vision model on Groq) or a failed model call
-  never produces nothing. MongoDB is optional too, an automatic in-memory store takes over if it's
-  missing or unreachable.
-- Neither product fabricates confidence it doesn't have. Ask Guardian (Claim Guardian's grounded
-  Q&A) will say "I don't know" rather than guess. The Bench's professionals are clearly labeled
-  fictional seed data. Pursuit-likelihood estimates are computed by a visible, simple formula, not
-  a black box.
-
-## Prerequisites
-
+<<<<<<< HEAD
+# AreteSapiens2.0
 - Node.js 18+
 - Python 3.11+
 
@@ -111,3 +70,6 @@ rewrite-based proxy in `next.config.mjs` needs nothing else changed.
 - `npm run build && npm start` runs the same two-service setup in production mode.
 - `npm test` runs the TypeScript test suite for the core check-generation logic.
 - Nothing in this project is legal or financial advice.
+=======
+# AreteSapiens2.0
+>>>>>>> 2809c1c9b25c0315e888e906a1666de4ef35516e
