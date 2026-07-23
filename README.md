@@ -2,7 +2,7 @@
 
 AreteSapiens 2.0 is an AI-powered document intelligence suite designed to help people understand legal notices and insurance decisions through transparent, evidence-based analysis. Instead of relying solely on a language model's interpretation, every conclusion is backed by deterministic validation, cited regulations, and reasoning that users can inspect for themselves.
 
-Originally built during an OpenAI Build Week hackathon, the project has evolved into two complementary applications—**Vaakil** and **Claim Guardian**—that solve different problems while sharing the same engineering philosophy: AI should assist judgment, not replace it.
+Originally built during an OpenAI Build Week hackathon, the project has evolved into two complementary applications--**Vaakil** and **Claim Guardian** --that solve different problems while sharing the same engineering philosophy: AI should assist judgment, not replace it.
 
 ---
 
@@ -10,7 +10,7 @@ Originally built during an OpenAI Build Week hackathon, the project has evolved 
 
 Vaakil helps users review legal and regulatory documents such as debt collection notices, eviction notices, court summons, employment termination letters, consumer notices, and other forms of legal correspondence. Users can upload a document or paste its contents to receive a structured review that identifies the document type and jurisdiction, highlights potentially threatening or non-compliant language directly from the source, explains its implications in plain language, and generates an appropriate draft response.
 
-Document classification is performed using deterministic keyword matching, avoiding unnecessary model calls during the identification stage. Detailed analysis is powered by Groq's `gpt-oss-20b`, with an automatic retry using `gpt-oss-120b` whenever structured output validation fails. If readable text is unavailable—or both model calls fail—the application seamlessly falls back to a deterministic rule-based engine, ensuring every document still receives a meaningful analysis.
+Document classification is performed using deterministic keyword matching, avoiding unnecessary model calls during the identification stage. Detailed analysis is powered by Groq's `gpt-oss-20b`, with an automatic retry using `gpt-oss-120b` whenever structured output validation fails. If readable text is unavailable or both model calls fail, the application seamlessly falls back to a deterministic rule-based engine, ensuring every document still receives a meaningful analysis.
 
 Vaakil also includes a lightweight financial health module that tracks recurring bills, subscriptions, warranties, and grocery prices over time. Historical records are monitored for anomalies, while Groq provides concise, plain-language explanations of detected changes.
 
